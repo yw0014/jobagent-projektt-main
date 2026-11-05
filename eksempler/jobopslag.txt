@@ -1,0 +1,16 @@
+Junior Python-udvikler – Nordisk Data ApS, Roskilde
+
+Nordisk Data ApS søger en junior Python-udvikler til vores team, der bygger dataløsninger for danske virksomheder.
+
+Dine opgaver:
+- Udvikle og vedligeholde Python-applikationer
+- Skrive unit tests og sikre kodekvalitet
+- Samarbejde med kolleger om nye løsninger
+
+Vi forventer:
+- Kendskab til Python
+- Erfaring med test, fx pytest
+- Interesse for AI og cloud (fx Azure)  
+- Gode samarbejdsevner
+
+Send din ansøgning senest den 1. december.

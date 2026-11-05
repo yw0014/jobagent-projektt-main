@@ -1,0 +1,81 @@
+<!doctype html>
+<html lang="da">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Jobansøgnings-agent</title>
+  <style>
+    body { font-family: system-ui, sans-serif; background: #f4f5f7; color: #1f2933; margin: 0; }
+    main { max-width: 900px; margin: 0 auto; padding: 24px 16px 48px; }
+    h1 { margin-bottom: 4px; }
+    .undertekst { color: #52606d; margin-top: 0; }
+    .kort { background: #fff; border-radius: 10px; padding: 20px; margin-top: 20px;
+            box-shadow: 0 1px 3px rgba(0,0,0,.08); }
+    .felter { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+    @media (max-width: 700px) { .felter { grid-template-columns: 1fr; } }
+    label { font-weight: 600; display: block; margin-bottom: 6px; }
+    textarea { width: 100%; box-sizing: border-box; min-height: 260px; padding: 10px;
+               border: 1px solid #cbd2d9; border-radius: 6px; font: inherit; resize: vertical; }
+    input[type=file] { margin-top: 8px; }
+    button { background: #2563eb; color: #fff; border: 0; border-radius: 6px;
+             padding: 12px 22px; font-size: 16px; cursor: pointer; margin-top: 16px; }
+    button:disabled { background: #93a3b8; cursor: wait; }
+    .fejl { background: #fdecea; color: #9b1c1c; padding: 12px; border-radius: 6px; margin-top: 20px; }
+    .advarsel { background: #fff7e0; color: #7a4d00; padding: 12px; border-radius: 6px; }
+    .ok { color: #166534; font-weight: 600; }
+    .lille { color: #52606d; font-size: 14px; }
+  </style>
+</head>
+<body>
+<main>
+  <h1>Jobansøgnings-agent</h1>
+  <p class="undertekst">Indsæt et jobopslag og dit CV, så skriver AI-agenten et udkast til en ansøgning.</p>
+
+  {% if fejl %}<div class="fejl">{{ fejl }}</div>{% endif %}
+
+  <form class="kort" method="post" enctype="multipart/form-data" onsubmit="venter()">
+    <div class="felter">
+      <div>
+        <label for="jobopslag">Jobopslag</label>
+        <textarea id="jobopslag" name="jobopslag" placeholder="Indsæt teksten fra jobopslaget her ...">{{ jobopslag or "" }}</textarea>
+      </div>
+      <div>
+        <label for="cv">CV</label>
+        <textarea id="cv" name="cv" placeholder="Indsæt dit CV her ...">{{ cv or "" }}</textarea>
+        <div class="lille">Eller upload dit CV (.pdf, .docx, .txt):</div>
+        <input type="file" name="cv_fil" accept=".pdf,.docx,.txt,.md">
+      </div>
+    </div>
+    <button id="knap" type="submit">Skriv ansøgning</button>
+  </form>
+
+  {% if resultat %}
+  <section class="kort">
+    <h2>{{ resultat.jobinfo.stilling }} hos {{ resultat.jobinfo.virksomhed }}</h2>
+    {% if resultat.problemer %}
+      <div class="advarsel">
+        <strong>Kvalitetstjekket fandt problemer:</strong>
+        <ul>{% for p in resultat.problemer %}<li>{{ p }}</li>{% endfor %}</ul>
+      </div>
+    {% else %}
+      <p class="ok">Kvalitetstjek: godkendt</p>
+    {% endif %}
+    <textarea id="ansogning">{{ resultat.ansøgning }}</textarea>
+    <button type="button" onclick="kopier()">Kopiér ansøgning</button>
+    <p class="lille">Gemt som {{ gemt_som }} i mappen udkast/</p>
+  </section>
+  {% endif %}
+</main>
+
+<script>
+  function venter() {
+    const knap = document.getElementById("knap");
+    knap.disabled = true;
+    knap.textContent = "Agenten skriver ... (det kan tage et minut)";
+  }
+  function kopier() {
+    navigator.clipboard.writeText(document.getElementById("ansogning").value);
+  }
+</script>
+</body>
+</html>

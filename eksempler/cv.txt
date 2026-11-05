@@ -1,0 +1,17 @@
+Navn: Anders Jensen
+Uddannelse: IT-teknolog, Zealand – 3. semester (2025–nu)
+
+Kompetencer:
+- Python, C#, SQL
+- Unit tests med pytest
+- Git og GitHub
+- Grundlæggende kendskab til Microsoft Azure
+
+Projekter:
+- AI-agent i Python, der skriver udkast til jobansøgninger (valgfag: Programmering og AI)
+- Webshop i C# med database (2. semester)
+
+Erhvervserfaring:
+- Butiksassistent, Netto (2022–2025): kundeservice, samarbejde og ansvar for vareopfyldning
+
+Sprog: Dansk og engelsk
