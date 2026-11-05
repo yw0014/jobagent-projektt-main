@@ -5,9 +5,9 @@
 Appen bruger Supabase, hvis `.env` indeholder `SUPABASE_URL` og
 `SUPABASE_SERVICE_ROLE_KEY`. Ellers bruger den den lokale mappe `udkast`.
 
-Opret tabellen `jobansogninger` i Supabase med SQL Editor, og tilføj derefter
-værdierne fra `.env.example` til din lokale `.env`-fil. Secret key må kun ligge
-på serveren og må ikke committe's til GitHub.
+Kør filen `supabase.sql` i Supabase (SQL Editor -> New query -> Run). Den opretter
+tabellen `jobansogninger` med kolonner til log og dato. Tilføj derefter
+værdierne fra `.env.example` til din lokale `.env`-fil.
 
 En hjemmeside, hvor man indsætter et jobopslag og et CV, og en AI-agent skriver et udkast til en ansøgning.
 
@@ -33,6 +33,11 @@ En hjemmeside, hvor man indsætter et jobopslag og et CV, og en AI-agent skriver
    python app.py
    ```
 5. Åbn http://127.0.0.1:5000 i browseren.
+
+## Sider
+- `/` Skriv en ny ansøgning. Viser agentens log og de seneste ansøgninger.
+- `/historik` Alle tidligere ansøgninger.
+- `/ansoegning/<id>` Én gemt ansøgning med log, jobopslag og CV.
 
 ## Kør testene
 ```
