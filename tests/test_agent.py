@@ -142,8 +142,27 @@ def test_filnavn_er_sikkert():
 
 def test_gem_udkast(tmp_path):
     storage = LocalStorage(tmp_path)
-    fil = storage.gem("Netto", "Udvikler", GOD_ANSØGNING, [])
+    id = storage.gem("Netto", "Udvikler", GOD_ANSØGNING, [])
+    fil = tmp_path / f"{id}.txt"
     assert fil.read_text(encoding="utf-8") == GOD_ANSØGNING
     metadata = json.loads(fil.with_suffix(".json").read_text(encoding="utf-8"))
     assert metadata["virksomhed"] == "Netto"
     assert storage.liste() == [fil]
+
+
+# Log
+def test_log_viser_alle_trin():
+    llm = FakeLLM([JOB_JSON, GOD_ANSØGNING])
+    resultat = JobApplicationAgent(llm, min_ord=50).kør("Jobopslag", "Mit CV")
+    trin = [linje["trin"] for linje in resultat.log]
+    assert trin == ["Analyse", "Skrivning", "Kvalitetstjek", "Resultat"]
+    assert all(linje["status"] == "ok" for linje in resultat.log)
+    assert "Netto" in resultat.log[0]["besked"]
+
+
+def test_log_viser_rettelser_og_advarsler():
+    llm = FakeLLM([JOB_JSON, "kort", "kort", "kort"])
+    resultat = JobApplicationAgent(llm, min_ord=50, max_forsøg=2).kør("Jobopslag", "Mit CV")
+    trin = [linje["trin"] for linje in resultat.log]
+    assert trin.count("Rettelse") == 2
+    assert resultat.log[-1]["status"] == "advarsel"
