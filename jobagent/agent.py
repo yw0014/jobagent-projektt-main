@@ -8,7 +8,9 @@ Agenten arbejder i tre trin:
 
 import json
 import re
+import time
 from dataclasses import dataclass, field
+from datetime import datetime
 
 from .llm import LLM
 
@@ -33,6 +35,28 @@ class Resultat:
     jobinfo: JobInfo
     ansøgning: str
     problemer: list[str]
+    log: list[dict] = field(default_factory=list)  # hvad agenten gjorde, trin for trin
+
+
+class Logger:
+    """Husker hvert trin agenten tager, med tidspunkt og hvor lang tid det tog."""
+
+    def __init__(self):
+        self.linjer: list[dict] = []
+        self._start = time.perf_counter()
+
+    def skriv(self, trin: str, besked: str, status: str = "ok") -> None:
+        nu = time.perf_counter()
+        self.linjer.append(
+            {
+                "tid": datetime.now().strftime("%H:%M:%S"),
+                "sekunder": round(nu - self._start, 1),
+                "trin": trin,
+                "besked": besked,
+                "status": status,  # "ok", "advarsel" eller "fejl"
+            }
+        )
+        self._start = nu
 
 
 class JobApplicationAgent:
@@ -94,17 +118,41 @@ class JobApplicationAgent:
         if not jobopslag.strip() or not cv.strip():
             raise ValueError("Både jobopslag og CV skal indeholde tekst")
 
+        log = Logger()
+
         jobinfo = self.analyser_jobopslag(jobopslag)
+        log.skriv(
+            "Analyse",
+            f"Fandt stillingen '{jobinfo.stilling}' hos {jobinfo.virksomhed} med {len(jobinfo.krav)} krav",
+        )
+
         ansøgning = self.skriv_ansøgning(jobopslag, cv, jobinfo)
+        log.skriv("Skrivning", f"Skrev første udkast på {len(ansøgning.split())} ord")
+
         problemer = self.tjek_kvalitet(ansøgning, jobinfo)
+        self._log_tjek(log, problemer)
 
         forsøg = 0
         while problemer and forsøg < self.max_forsøg:
-            ansøgning = self.ret_ansøgning(ansøgning, problemer)
-            problemer = self.tjek_kvalitet(ansøgning, jobinfo)
             forsøg += 1
+            ansøgning = self.ret_ansøgning(ansøgning, problemer)
+            log.skriv("Rettelse", f"Forsøg {forsøg}: bad AI'en rette {len(problemer)} problem(er)")
+            problemer = self.tjek_kvalitet(ansøgning, jobinfo)
+            self._log_tjek(log, problemer)
 
-        return Resultat(jobinfo=jobinfo, ansøgning=ansøgning, problemer=problemer)
+        if problemer:
+            log.skriv("Resultat", f"Stoppede efter {forsøg} rettelser. Tjek advarslerne selv.", "advarsel")
+        else:
+            log.skriv("Resultat", "Ansøgningen er klar")
+
+        return Resultat(jobinfo=jobinfo, ansøgning=ansøgning, problemer=problemer, log=log.linjer)
+
+    @staticmethod
+    def _log_tjek(log: Logger, problemer: list[str]) -> None:
+        if problemer:
+            log.skriv("Kvalitetstjek", "Fandt problemer: " + "; ".join(problemer), "advarsel")
+        else:
+            log.skriv("Kvalitetstjek", "Godkendt: længde, virksomhedsnavn og ingen pladsholdere")        
 
 
 def parse_jobinfo(svar: str) -> JobInfo:
