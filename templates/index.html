@@ -1,81 +1,166 @@
-<!doctype html>
-<html lang="da">
-<head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Jobansøgnings-agent</title>
-  <style>
-    body { font-family: system-ui, sans-serif; background: #f4f5f7; color: #1f2933; margin: 0; }
-    main { max-width: 900px; margin: 0 auto; padding: 24px 16px 48px; }
-    h1 { margin-bottom: 4px; }
-    .undertekst { color: #52606d; margin-top: 0; }
-    .kort { background: #fff; border-radius: 10px; padding: 20px; margin-top: 20px;
-            box-shadow: 0 1px 3px rgba(0,0,0,.08); }
-    .felter { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
-    @media (max-width: 700px) { .felter { grid-template-columns: 1fr; } }
-    label { font-weight: 600; display: block; margin-bottom: 6px; }
-    textarea { width: 100%; box-sizing: border-box; min-height: 260px; padding: 10px;
-               border: 1px solid #cbd2d9; border-radius: 6px; font: inherit; resize: vertical; }
-    input[type=file] { margin-top: 8px; }
-    button { background: #2563eb; color: #fff; border: 0; border-radius: 6px;
-             padding: 12px 22px; font-size: 16px; cursor: pointer; margin-top: 16px; }
-    button:disabled { background: #93a3b8; cursor: wait; }
-    .fejl { background: #fdecea; color: #9b1c1c; padding: 12px; border-radius: 6px; margin-top: 20px; }
-    .advarsel { background: #fff7e0; color: #7a4d00; padding: 12px; border-radius: 6px; }
-    .ok { color: #166534; font-weight: 600; }
-    .lille { color: #52606d; font-size: 14px; }
-  </style>
-</head>
-<body>
-<main>
-  <h1>Jobansøgnings-agent</h1>
-  <p class="undertekst">Indsæt et jobopslag og dit CV, så skriver AI-agenten et udkast til en ansøgning.</p>
+{% extends "base.html" %}
+{% block titel %}Ny ansøgning{% endblock %}
 
-  {% if fejl %}<div class="fejl">{{ fejl }}</div>{% endif %}
+{% block indhold %}
+<div class="sidehoved">
+  <h1>Skriv en ansøgning</h1>
+  <p>Indsæt et jobopslag og dit CV. AI-agenten analyserer opslaget, skriver et udkast og kvalitetstjekker det.</p>
+</div>
 
-  <form class="kort" method="post" enctype="multipart/form-data" onsubmit="venter()">
-    <div class="felter">
-      <div>
-        <label for="jobopslag">Jobopslag</label>
-        <textarea id="jobopslag" name="jobopslag" placeholder="Indsæt teksten fra jobopslaget her ...">{{ jobopslag or "" }}</textarea>
-      </div>
-      <div>
-        <label for="cv">CV</label>
-        <textarea id="cv" name="cv" placeholder="Indsæt dit CV her ...">{{ cv or "" }}</textarea>
-        <div class="lille">Eller upload dit CV (.pdf, .docx, .txt):</div>
-        <input type="file" name="cv_fil" accept=".pdf,.docx,.txt,.md">
-      </div>
-    </div>
-    <button id="knap" type="submit">Skriv ansøgning</button>
-  </form>
+{% if fejl %}<div class="besked besked-fejl">{{ fejl }}</div>{% endif %}
 
-  {% if resultat %}
-  <section class="kort">
-    <h2>{{ resultat.jobinfo.stilling }} hos {{ resultat.jobinfo.virksomhed }}</h2>
-    {% if resultat.problemer %}
-      <div class="advarsel">
-        <strong>Kvalitetstjekket fandt problemer:</strong>
-        <ul>{% for p in resultat.problemer %}<li>{{ p }}</li>{% endfor %}</ul>
+<div class="gitter">
+  <div>
+    <form class="kort" method="post" enctype="multipart/form-data" id="formular">
+      <div class="felter">
+        <div>
+          <label for="jobopslag">Jobopslag</label>
+          <textarea id="jobopslag" name="jobopslag" placeholder="Indsæt teksten fra jobopslaget her ...">{{ jobopslag or "" }}</textarea>
+          <div class="felt-info"><span>Hele opslaget giver det bedste resultat</span><span data-tæl="jobopslag"></span></div>
+        </div>
+        <div>
+          <label for="cv">CV</label>
+          <textarea id="cv" name="cv" placeholder="Indsæt dit CV her ...">{{ cv or "" }}</textarea>
+          <div class="felt-info"><span>Agenten bruger kun det, der står her</span><span data-tæl="cv"></span></div>
+          <div class="upload">
+            <span>Eller upload (.pdf, .docx, .txt):</span>
+            <input type="file" name="cv_fil" accept=".pdf,.docx,.txt,.md">
+          </div>
+        </div>
       </div>
-    {% else %}
-      <p class="ok">Kvalitetstjek: godkendt</p>
+      <div class="handlinger">
+        <button class="knap knap-primær" id="knap" type="submit">Skriv ansøgning</button>
+        <span class="felt-info">Det tager typisk 30 sekunder til et par minutter.</span>
+      </div>
+    </form>
+
+    {% if resultat %}
+    <section class="kort" id="resultat">
+      <div class="resultat-top">
+        <div>
+          <h2>{{ resultat.jobinfo.stilling or "Ansøgning" }}</h2>
+          <p class="under" style="margin:0">{{ resultat.jobinfo.virksomhed }}</p>
+        </div>
+        <div class="mærker">
+          {% if resultat.problemer %}
+            <span class="mærke mærke-adv">{{ resultat.problemer|length }} advarsel{{ 'er' if resultat.problemer|length > 1 }}</span>
+          {% else %}
+            <span class="mærke mærke-ok">Kvalitetstjek godkendt</span>
+          {% endif %}
+          <span class="mærke mærke-grå">{{ resultat.ansøgning.split()|length }} ord</span>
+        </div>
+      </div>
+
+      {% if resultat.problemer %}
+      <div class="besked besked-adv" style="margin:0 0 16px">
+        <strong>Læs ekstra grundigt igennem:</strong>
+        <ul style="margin:6px 0 0">{% for p in resultat.problemer %}<li>{{ p }}</li>{% endfor %}</ul>
+      </div>
+      {% endif %}
+
+      <textarea id="ansogning" class="ansøgning-tekst">{{ resultat.ansøgning }}</textarea>
+      <div class="handlinger">
+        <button type="button" class="knap knap-primær" onclick="kopier()">Kopiér</button>
+        <button type="button" class="knap knap-sekundær" onclick="download()">Download .txt</button>
+        {% if gemt_id %}<a class="knap knap-sekundær" href="{{ url_for('vis_ansøgning', id=gemt_id) }}">Åbn gemt version</a>{% endif %}
+        <span class="kopieret" id="kopieret">Kopieret ✓</span>
+      </div>
+    </section>
+
+    <section class="kort">
+      <h2>Agentens log</h2>
+      <p class="under">Det her gjorde agenten, trin for trin.</p>
+      {% set log = resultat.log %}
+      {% include "_log.html" %}
+    </section>
     {% endif %}
-    <textarea id="ansogning">{{ resultat.ansøgning }}</textarea>
-    <button type="button" onclick="kopier()">Kopiér ansøgning</button>
-    <p class="lille">Gemt som {{ gemt_som }} i mappen udkast/</p>
-  </section>
-  {% endif %}
-</main>
+  </div>
 
+  <aside class="kort">
+    <h2>Seneste ansøgninger</h2>
+    <p class="under">Det, du sidst har lavet.</p>
+    {% if historik_fejl %}<p class="besked besked-fejl" style="margin:0">{{ historik_fejl }}</p>{% endif %}
+    {% if seneste %}
+    <ul class="seneste">
+      {% for a in seneste %}
+      <li><a href="{{ url_for('vis_ansøgning', id=a.id) }}">
+        <div class="titel">{{ a.stilling or "Uden titel" }}</div>
+        <div class="meta">
+          <span>{{ a.virksomhed }}</span>·<span>{{ (a.oprettet or "")[:16]|replace("T", " ") }}</span>
+          {% if a.problemer %}<span class="mærke mærke-adv">!</span>{% endif %}
+        </div>
+      </a></li>
+      {% endfor %}
+    </ul>
+    <p style="margin:12px 0 0"><a href="{{ url_for('historik') }}">Se hele historikken →</a></p>
+    {% elif not historik_fejl %}
+    <p class="tom">Du har ikke lavet nogen ansøgninger endnu.</p>
+    {% endif %}
+  </aside>
+</div>
+
+<div class="venter" id="venter">
+  <div class="venter-boks">
+    <div style="display:flex;gap:14px;align-items:center">
+      <div class="spinner"></div>
+      <div><strong>Agenten arbejder ...</strong><div class="felt-info" style="margin:0">Luk ikke siden.</div></div>
+    </div>
+    <ul class="venter-trin" id="venter-trin">
+      <li>1. Analyserer jobopslaget</li>
+      <li>2. Skriver udkastet</li>
+      <li>3. Kvalitetstjekker</li>
+      <li>4. Gemmer</li>
+    </ul>
+  </div>
+</div>
+{% endblock %}
+
+{% block script %}
 <script>
-  function venter() {
-    const knap = document.getElementById("knap");
-    knap.disabled = true;
-    knap.textContent = "Agenten skriver ... (det kan tage et minut)";
-  }
+  // Tæller tegn og ord i felterne
+  document.querySelectorAll("[data-tæl]").forEach(function (felt) {
+    const tekst = document.getElementById(felt.dataset.tæl);
+    function opdater() {
+      const ord = tekst.value.trim() ? tekst.value.trim().split(/\s+/).length : 0;
+      felt.textContent = ord + " ord";
+    }
+    tekst.addEventListener("input", opdater);
+    opdater();
+  });
+
+  // Viser ventevinduet og skifter trin, mens agenten arbejder
+  document.getElementById("formular").addEventListener("submit", function () {
+    document.getElementById("knap").disabled = true;
+    document.getElementById("venter").classList.add("vis");
+    const trin = document.querySelectorAll("#venter-trin li");
+    let i = 0;
+    trin[0].classList.add("nu");
+    setInterval(function () {
+      if (i < trin.length - 1) {
+        trin[i].classList.replace("nu", "færdig");
+        i++;
+        trin[i].classList.add("nu");
+      }
+    }, 8000);
+  });
+
   function kopier() {
     navigator.clipboard.writeText(document.getElementById("ansogning").value);
+    const besked = document.getElementById("kopieret");
+    besked.style.display = "inline";
+    setTimeout(function () { besked.style.display = "none"; }, 2000);
   }
+
+  function download() {
+    const tekst = document.getElementById("ansogning").value;
+    const link = document.createElement("a");
+    link.href = URL.createObjectURL(new Blob([tekst], { type: "text/plain;charset=utf-8" }));
+    link.download = "ansoegning.txt";
+    link.click();
+  }
+
+  // Ruller ned til resultatet, når det er klar
+  const resultat = document.getElementById("resultat");
+  if (resultat) resultat.scrollIntoView({ behavior: "smooth" });
 </script>
-</body>
-</html>
+{% endblock %}

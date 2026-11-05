@@ -1,0 +1,39 @@
+{% extends "base.html" %}
+{% block titel %}Historik{% endblock %}
+
+{% block indhold %}
+<div class="sidehoved">
+  <h1>Historik</h1>
+  <p>Alle ansøgninger, agenten har skrevet. Nyeste øverst.</p>
+</div>
+
+{% if historik_fejl %}<div class="besked besked-fejl">{{ historik_fejl }}</div>{% endif %}
+
+<div class="kort" style="margin-top:24px">
+  {% if ansøgninger %}
+  <div class="tabel-ramme">
+    <table class="historik">
+      <thead>
+        <tr><th>Stilling</th><th>Virksomhed</th><th>Oprettet</th><th>Ord</th><th>Status</th></tr>
+      </thead>
+      <tbody>
+        {% for a in ansøgninger %}
+        <tr>
+          <td><a href="{{ url_for('vis_ansøgning', id=a.id) }}"><strong>{{ a.stilling or "Uden titel" }}</strong></a></td>
+          <td>{{ a.virksomhed }}</td>
+          <td>{{ (a.oprettet or "")[:16]|replace("T", " ") }}</td>
+          <td>{{ a.antal_ord }}</td>
+          <td>
+            {% if a.problemer %}<span class="mærke mærke-adv">{{ a.problemer|length }} advarsel{{ 'er' if a.problemer|length > 1 }}</span>
+            {% else %}<span class="mærke mærke-ok">Godkendt</span>{% endif %}
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% elif not historik_fejl %}
+  <p class="tom">Der er ingen ansøgninger endnu. <a href="{{ url_for('forside') }}">Skriv den første →</a></p>
+  {% endif %}
+</div>
+{% endblock %}

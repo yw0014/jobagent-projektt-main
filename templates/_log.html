@@ -1,0 +1,14 @@
+{# Viser agentens log som en tidslinje. Bruges både på forsiden og på detaljesiden. #}
+{% if log %}
+<ul class="log">
+  {% for linje in log %}
+  <li class="log-{{ linje.status }}">
+    <span class="log-ikon">{{ '✓' if linje.status == 'ok' else ('!' if linje.status == 'advarsel' else '×') }}</span>
+    <div><span class="log-trin">{{ linje.trin }}</span> · {{ linje.besked }}</div>
+    <span class="log-tid">{{ linje.tid }}{% if linje.sekunder %} · {{ linje.sekunder }} s{% endif %}</span>
+  </li>
+  {% endfor %}
+</ul>
+{% else %}
+<p class="tom">Der er ingen log for denne ansøgning.</p>
+{% endif %}

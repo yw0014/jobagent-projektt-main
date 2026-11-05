@@ -1,0 +1,10 @@
+{% extends "base.html" %}
+{% block titel %}Ikke fundet{% endblock %}
+
+{% block indhold %}
+<div class="kort" style="max-width:520px;margin:40px auto;text-align:center">
+  <h2>Hov!</h2>
+  <p class="under">{{ besked }}</p>
+  <a class="knap knap-primær" href="{{ url_for('forside') }}">Til forsiden</a>
+</div>
+{% endblock %}

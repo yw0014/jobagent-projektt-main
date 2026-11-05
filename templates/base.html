@@ -1,0 +1,29 @@
+<!doctype html>
+<html lang="da">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{% block titel %}JobAgent{% endblock %} · JobAgent</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+  <header class="topbar">
+    <div class="topbar-indhold">
+      <a class="logo" href="{{ url_for('forside') }}"><span class="logo-ikon">JA</span> JobAgent</a>
+      <nav class="nav">
+        <a href="{{ url_for('forside') }}" class="{{ 'aktiv' if request.endpoint == 'forside' }}">Ny ansøgning</a>
+        <a href="{{ url_for('historik') }}" class="{{ 'aktiv' if request.endpoint in ('historik', 'vis_ansøgning') }}">Historik</a>
+      </nav>
+      <div class="lagring" title="Hvor ansøgningerne gemmes"><span class="prik"></span> Gemmer i {{ 'Supabase' if lagring_navn == 'Supabase' else 'lokal mappe' }}</div>
+    </div>
+  </header>
+
+  <main class="side">
+    {% block indhold %}{% endblock %}
+  </main>
+
+  <footer>JobAgent · AI-genererede udkast skal altid læses igennem, før de sendes.</footer>
+
+  {% block script %}{% endblock %}
+</body>
+</html>

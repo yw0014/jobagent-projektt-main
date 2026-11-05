@@ -1,0 +1,49 @@
+{% extends "base.html" %}
+{% block titel %}{{ a.stilling or "Ansøgning" }}{% endblock %}
+
+{% block indhold %}
+<p style="margin:0 0 12px"><a href="{{ url_for('historik') }}">← Tilbage til historik</a></p>
+<div class="sidehoved">
+  <h1>{{ a.stilling or "Ansøgning" }}</h1>
+  <p>{{ a.virksomhed }} · oprettet {{ (a.oprettet or "")[:16]|replace("T", " ") }}</p>
+</div>
+
+<div class="gitter">
+  <div>
+    <section class="kort">
+      <div class="resultat-top">
+        <h2>Ansøgning</h2>
+        <div class="mærker">
+          {% if a.problemer %}<span class="mærke mærke-adv">{{ a.problemer|length }} advarsel{{ 'er' if a.problemer|length > 1 }}</span>
+          {% else %}<span class="mærke mærke-ok">Kvalitetstjek godkendt</span>{% endif %}
+          <span class="mærke mærke-grå">{{ a.antal_ord }} ord</span>
+        </div>
+      </div>
+      {% if a.problemer %}
+      <div class="besked besked-adv" style="margin:0 0 16px">
+        <ul style="margin:0">{% for p in a.problemer %}<li>{{ p }}</li>{% endfor %}</ul>
+      </div>
+      {% endif %}
+      <textarea id="ansogning" class="ansøgning-tekst">{{ a.ansogning }}</textarea>
+      <div class="handlinger">
+        <button type="button" class="knap knap-primær" onclick="navigator.clipboard.writeText(document.getElementById('ansogning').value); this.textContent='Kopieret ✓'">Kopiér</button>
+      </div>
+    </section>
+
+    {% if a.jobopslag or a.cv %}
+    <section class="kort">
+      <h2>Det, agenten fik at arbejde med</h2>
+      {% if a.jobopslag %}<details><summary>Jobopslag</summary><pre class="kilde">{{ a.jobopslag }}</pre></details>{% endif %}
+      {% if a.cv %}<details><summary>CV</summary><pre class="kilde">{{ a.cv }}</pre></details>{% endif %}
+    </section>
+    {% endif %}
+  </div>
+
+  <aside class="kort">
+    <h2>Agentens log</h2>
+    <p class="under">Trin for trin.</p>
+    {% set log = a.log %}
+    {% include "_log.html" %}
+  </aside>
+</div>
+{% endblock %}
